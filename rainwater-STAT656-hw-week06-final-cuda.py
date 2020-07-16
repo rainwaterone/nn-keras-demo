@@ -19,14 +19,9 @@ from tensorflow.keras import optimizers
 from sklearn.linear_model   import LogisticRegression
 from sklearn.neural_network import MLPClassifier 
 
-## import  and set up CUDA stuff
-# from tensorflow.python.client import device_lib
-# config = tf.ConfigProto(device_count={'GPU':1, 'CPU':12})
-# sess = tf.Session(config=config)
-# keras.backend.set_session(sess)
 
-
-
+physical_devices = tf.config.list_physical_devices('GPU') 
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 def header(headerstring):
     lead = 38-(int(len(headerstring)/2))
@@ -59,8 +54,8 @@ print(x_test.shape[0], "test samples")
 
 
 # convert class vectors to binary class matrices
-y_train = keras.utils.to_categorical(y_train, num_classes)
-y_test = keras.utils.to_categorical(y_test, num_classes)
+y_trainbin = keras.utils.to_categorical(y_train, num_classes)
+y_testbin = keras.utils.to_categorical(y_test, num_classes)
 
 
 batch_size = 128
@@ -68,100 +63,100 @@ epochs = 44
 
 
 
-# header('Running Keras Sequential with 2DCNN...')
-# tf.keras.backend.clear_session()
-# with tf.device('/GPU:0'):
-#     model = tf.keras.Sequential()
-#     # model.add(tf.keras.Input(shape=input_shape))
-#     model.add(layers.Conv2D(32, kernel_size=(3, 3), 
-#                             input_shape = input_shape, activation="relu"))
-#     model.add(layers.MaxPooling2D(pool_size=(2, 2)))
-#     model.add(layers.Conv2D(64, kernel_size=(3, 3), activation="relu"))
-#     model.add(layers.MaxPooling2D(pool_size=(2, 2)))
-#     model.add(layers.Flatten())
-#     model.add(layers.Dropout(0.5))
-#     model.add(layers.Dense(num_classes, activation="softmax"))
-    
-#     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["acc"])
-    
-#     history = model.fit(x_train, y_train, validation_split=0.1,
-#               epochs=epochs, batch_size=200, verbose=1, shuffle=1)
-
-# model.summary()
-
-# nn_keras.accuracy_plot(history.history)
-# # nn_keras.display_metrics(model, x_train, y_train)
-# # nn_keras.display_metrics(model, x_test, y_test)
-# score = model.evaluate(x_test, y_test, verbose=0)
-
-# print("Keras CNN Test loss:", score[0])
-# print("Keras CNN Test accuracy:", score[1])
-
-# plt.plot(history.history['loss'])
-# plt.plot(history.history['val_loss'])
-# plt.legend(['loss', 'val_loss'])
-# plt.title('CNN - Loss')
-# plt.xlabel('epoch')
-
-# plt.plot(history.history['acc'])
-# plt.plot(history.history['val_acc'])
-# plt.legend(['acc', 'val_acc'])
-# plt.title('CNN - Accuracy')
-# plt.xlabel('epoch')
-
-# Attempt to run a model with conventional dense layers
-header('Running Keras Sequential with Dense Layers...')
+header('Running Keras Sequential with 2DCNN...')
 tf.keras.backend.clear_session()
+with tf.device('/GPU:0'):
+    model = tf.keras.Sequential()
+    # model.add(tf.keras.Input(shape=input_shape))
+    model.add(layers.Conv2D(32, kernel_size=(3, 3), 
+                            input_shape = input_shape, activation="relu"))
+    model.add(layers.MaxPooling2D(pool_size=(2, 2)))
+    model.add(layers.Conv2D(64, kernel_size=(3, 3), activation="relu"))
+    model.add(layers.MaxPooling2D(pool_size=(2, 2)))
+    model.add(layers.Flatten())
+    model.add(layers.Dropout(0.5))
+    model.add(layers.Dense(num_classes, activation="softmax"))
+    
+    model.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["acc"])
+    
+    history = model.fit(x_train, y_train, validation_split=0.1,
+              epochs=epochs, batch_size=200, verbose=1, shuffle=1)
 
-hlaf = 'relu' # Hidden Layer Activation Function
+model.summary()
 
-npl = 1024
-
-model = keras.Sequential()
-model.add(layers.Dense(npl, input_dim = num_pixels,
-                activation = hlaf))
-model.add(layers.Dense(npl, activation = hlaf))       # Adds another layer
-model.add(layers.Dense(npl, activation = hlaf))       # And another
-model.add(layers.Dense(npl, activation = hlaf))       # And another
-model.add(layers.Dense(npl, activation = hlaf))       # Adds another layer
-model.add(layers.Dense(npl, activation = hlaf))       # And another
-model.add(layers.Dense(npl, activation = hlaf))       # And another
-model.add(layers.Dense(num_classes, activation = 'softmax'))
-model.compile(optimizers.Adam(lr=0.01),
-            loss='categorical_crossentropy',
-            metrics=['acc'])
-
-print(model.summary())
-
-#Must flatten the model before fitting Dense layers
-
-print('\nInitial x_train shape: ', x_train.shape)
-x_train = x_train.reshape(x_train.shape[0], x_train.shape[1] * x_train.shape[2])
-x_test  = x_test.reshape(x_test.shape[0], x_test.shape[1] * x_test.shape[2])
-print('Reshaped x_train shape: ', x_train.shape)
-print('Reshaped x_test  shape: ', x_test.shape)
-
-history = model.fit(x_train, y_train, validation_split=0.1,
-         epochs=epochs, batch_size=200, verbose=1, shuffle=1)
-
-score = model.evaluate(x_test, y_test, verbose=0)
-print("Keras Dense Layer Test loss:", score[0])
-print("Keras Dense Layer Test accuracy:", score[1])
 nn_keras.accuracy_plot(history.history)
-nn_keras.display_metrics(model, x_train, y_train)
-nn_keras.display_metrics(model, x_test, y_test)
+# nn_keras.display_metrics(model, x_train, y_train)
+# nn_keras.display_metrics(model, x_test, y_test)
+score = model.evaluate(x_test, y_test, verbose=0)
+
+print("Keras CNN Test loss:", score[0])
+print("Keras CNN Test accuracy:", score[1])
 
 plt.plot(history.history['loss'])
 plt.plot(history.history['val_loss'])
 plt.legend(['loss', 'val_loss'])
-plt.title('Dense Layer - Loss')
+plt.title('CNN - Loss')
 plt.xlabel('epoch')
 
 plt.plot(history.history['acc'])
 plt.plot(history.history['val_acc'])
 plt.legend(['acc', 'val_acc'])
-plt.title('Dense Layer - Accuracy')
+plt.title('CNN - Accuracy')
 plt.xlabel('epoch')
+
+# # Attempt to run a model with conventional dense layers
+# header('Running Keras Sequential with Dense Layers...')
+# tf.keras.backend.clear_session()
+
+# hlaf = 'relu' # Hidden Layer Activation Function
+
+# npl = 1024
+
+# model = keras.Sequential()
+# model.add(layers.Dense(npl, input_dim = num_pixels,
+#                 activation = hlaf))
+# model.add(layers.Dense(npl, activation = hlaf))       # Adds another layer
+# model.add(layers.Dense(npl, activation = hlaf))       # And another
+# model.add(layers.Dense(npl, activation = hlaf))       # And another
+# model.add(layers.Dense(npl, activation = hlaf))       # Adds another layer
+# model.add(layers.Dense(npl, activation = hlaf))       # And another
+# model.add(layers.Dense(npl, activation = hlaf))       # And another
+# model.add(layers.Dense(num_classes, activation = 'softmax'))
+# model.compile(optimizers.Adam(lr=0.01),
+#             loss='categorical_crossentropy',
+#             metrics=['acc'])
+
+# print(model.summary())
+
+# #Must flatten the model before fitting Dense layers
+
+# print('\nInitial x_train shape: ', x_train.shape)
+# x_train = x_train.reshape(x_train.shape[0], x_train.shape[1] * x_train.shape[2])
+# x_test  = x_test.reshape(x_test.shape[0], x_test.shape[1] * x_test.shape[2])
+# print('Reshaped x_train shape: ', x_train.shape)
+# print('Reshaped x_test  shape: ', x_test.shape)
+
+# history = model.fit(x_train, y_train, validation_split=0.1,
+#          epochs=epochs, batch_size=200, verbose=1, shuffle=1)
+
+# score = model.evaluate(x_test, y_test, verbose=0)
+# print("Keras Dense Layer Test loss:", score[0])
+# print("Keras Dense Layer Test accuracy:", score[1])
+# nn_keras.accuracy_plot(history.history)
+# nn_keras.display_metrics(model, x_train, y_train)
+# nn_keras.display_metrics(model, x_test, y_test)
+
+# plt.plot(history.history['loss'])
+# plt.plot(history.history['val_loss'])
+# plt.legend(['loss', 'val_loss'])
+# plt.title('Dense Layer - Loss')
+# plt.xlabel('epoch')
+
+# plt.plot(history.history['acc'])
+# plt.plot(history.history['val_acc'])
+# plt.legend(['acc', 'val_acc'])
+# plt.title('Dense Layer - Accuracy')
+# plt.xlabel('epoch')
 
 # header('Running scikit-learn logistic regression...')
 
